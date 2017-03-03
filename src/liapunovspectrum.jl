@@ -1,33 +1,47 @@
 # This file is part of the TaylorIntegration.jl package; MIT licensed
 
+#in-place evaluation version of TaylorSeries.jacobian;
+#Modified from TaylorSeries.jl (URL: https://github.com/JuliaDiff/TaylorSeries.jl)
+#TaylorSeries.jl is released under MIT license; copyright 2016 Luis Benet and David P. Sanders
+function jacobian!{T<:Number}(jjac::Array{T,2}, vf::Array{TaylorN{T},1})
+    numVars = get_numvars()
+    @assert length(vf) == numVars
+
+    for comp = 1:numVars
+        jjac[comp,:] = vf[comp].coeffs[2].coeffs[1:end]
+    end
+
+    nothing
+end
+
 """
     stabilitymatrix!{T<:Number, S<:Number}(eqsdiff, t0::T, x::Array{T,1},
-        jac::Array{T,2})
+        jjac::Array{T,2})
     stabilitymatrix!{T<:Number, S<:Number}(eqsdiff, t0::T, x::Array{Taylor1{T},1},
-        jac::Array{Taylor1{T},2})
+        jjac::Array{Taylor1{T},2})
 
-Updates the matrix `jac` (linearized equations of motion)
+Updates the matrix `jjac` (linearized equations of motion)
 computed from the equations of motion (`eqsdiff`), at time `t0`
 at `x0`.
 """
 function stabilitymatrix!{T<:Number}(eqsdiff!, t0::T, x::Array{T,1},
-        δx::Array{TaylorN{T},1}, δdx::Array{TaylorN{T},1}, jac::Array{T,2})
+        δx::Array{TaylorN{T},1}, δdx::Array{TaylorN{T},1}, jjac::Array{T,2})
     @inbounds for ind in eachindex(x)
         δx[ind] = x[ind] + TaylorN(T,ind,order=1)
     end
     eqsdiff!(t0, δx, δdx)
-    jac[:] = jacobian( δdx )
+    jacobian!(jjac, δdx)
     nothing
 end
 
 function stabilitymatrix!{T<:Number}(eqsdiff!, t0::T, x::Array{Taylor1{T},1},
-        δx::Array{TaylorN{Taylor1{T}},1}, δdx::Array{TaylorN{Taylor1{T}},1}, jac::Array{Taylor1{T},2})
+        δx::Array{TaylorN{Taylor1{T}},1}, δdx::Array{TaylorN{Taylor1{T}},1}, jjac::Array{Taylor1{T},2})
     @inbounds for ind in eachindex(x)
         δx[ind] = convert(TaylorN{Taylor1{T}}, x[ind]) +
             TaylorN(Taylor1{T},ind,order=1)
     end
     eqsdiff!(t0, δx, δdx)
-    jac[:] = jacobian( δdx )
+    jacobian!(jjac, δdx)
     nothing
 end
 
