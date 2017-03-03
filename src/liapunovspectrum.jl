@@ -7,9 +7,29 @@ function jacobian!{T<:Number}(jjac::Array{T,2}, vf::Array{TaylorN{T},1})
     numVars = get_numvars()
     @assert length(vf) == numVars
 
-    for comp = 1:numVars
-        jjac[comp,:] = vf[comp].coeffs[2].coeffs[1:end]
+    for comp2 = 1:numVars
+        for comp1 = 1:numVars
+            jjac[comp1,comp2] = vf[comp1].coeffs[2].coeffs[comp2]
+        end
     end
+
+    nothing
+end
+
+function halleyjacobian!{T<:Number}(jjac::Array{T,2}, vf::Array{TaylorN{T},1})
+    numVars = get_numvars()
+    @assert length(vf) == numVars
+    myset = union(31:33,64:66)
+
+    #println("vf=", vf)
+
+    for comp2 = 1:6
+        for comp1 = 1:6
+            jjac[comp1,comp2] = vf[myset[comp1]].coeffs[2].coeffs[myset[comp2]]
+        end
+    end
+
+    #println("jjac=", jjac)
 
     nothing
 end
@@ -36,12 +56,21 @@ end
 
 function stabilitymatrix!{T<:Number}(eqsdiff!, t0::T, x::Array{Taylor1{T},1},
         δx::Array{TaylorN{Taylor1{T}},1}, δdx::Array{TaylorN{Taylor1{T}},1}, jjac::Array{Taylor1{T},2})
-    @inbounds for ind in eachindex(x)
-        δx[ind] = convert(TaylorN{Taylor1{T}}, x[ind]) +
-            TaylorN(Taylor1{T},ind,order=1)
+
+    @inbounds for ind in 1:30
+        δx[ind] = convert(TaylorN{Taylor1{T}}, x[ind])# + 0.0*TaylorN(Taylor1{T},ind,order=1)
+    end
+    @inbounds for ind in 31:33
+        δx[ind] = convert(TaylorN{Taylor1{T}}, x[ind]) + TaylorN(Taylor1{T},ind,order=1)
+    end
+    @inbounds for ind in 34:63
+        δx[ind] = convert(TaylorN{Taylor1{T}}, x[ind])# + 0.0*TaylorN(Taylor1{T},ind,order=1)
+    end
+    @inbounds for ind in 64:66
+        δx[ind] = convert(TaylorN{Taylor1{T}}, x[ind]) + TaylorN(Taylor1{T},ind,order=1)
     end
     eqsdiff!(t0, δx, δdx)
-    jacobian!(jjac, δdx)
+    halleyjacobian!(jjac, δdx)
     nothing
 end
 
@@ -118,7 +147,8 @@ function liap_jetcoeffs!{T<:Number}(eqsdiff!, t0::T, x::Vector{Taylor1{T}},
 
     # Dimensions of phase-space: dof
     nx = length(x)
-    dof = round(Int, (-1+sqrt(1+4*nx))/2)
+    # dof = round(Int, (-1+sqrt(1+4*nx))/2)
+    dof = nx-36
 
     for ord in 1:order
         ordnext = ord+1
@@ -131,7 +161,12 @@ function liap_jetcoeffs!{T<:Number}(eqsdiff!, t0::T, x::Vector{Taylor1{T}},
         # Equations of motion
         eqsdiff!(t0, xaux, dx)
         stabilitymatrix!( eqsdiff!, t0, xaux[1:dof], δx, δdx, jac )
-        @inbounds dx[dof+1:nx] = jac * reshape( xaux[dof+1:nx], (dof,dof) )
+        @inbounds dx[dof+1:nx] = jac * reshape( xaux[dof+1:nx], (6,6) )
+        # if ord == 1
+        #     println("jac=", jac)
+        #     println("reshape( xaux[dof+1:nx], (6,6) )=", reshape( xaux[dof+1:nx], (6,6) ))
+        #     println("dx[dof+1:nx]=", dx[dof+1:nx])
+        # end
 
         # Recursion relations
         @inbounds for j in eachindex(x)
@@ -166,22 +201,23 @@ function liap_taylorinteg{T<:Number}(f, q0::Array{T,1}, t0::T, tmax::T,
     tv = Array{T}(maxsteps+1)
     dof = length(q0)
     xv = Array{T}(dof, maxsteps+1)
-    λ = similar(xv)
-    λtsum = similar(q0)
-    jt = eye(T, dof)
+    λ = Array{T}(6, maxsteps+1)
+    λtsum = Array{T}(6)
+    jt = eye(T, 6)
 
     # NOTE: This changes GLOBALLY internal parameters of TaylorN
-    global _δv = set_variables("δ", order=1, numvars=dof)
+    global _δv = set_variables("δ", order=1, numvars=66)
 
     # Initial conditions
     @inbounds tv[1] = t0
     @inbounds for ind in 1:dof
         xv[ind,1] = q0[ind]
+    end
+    @inbounds for ind in 1:6
         λ[ind,1] = zero(T)
         λtsum[ind] = zero(T)
     end
-    x0 = vcat(q0, reshape(jt, dof*dof))
-    nx0 = dof*(dof+1)
+    x0 = vcat(q0, reshape(jt, 6*6))
     t00 = t0
 
     # Initialize the vector of Taylor1 expansions
@@ -195,13 +231,13 @@ function liap_taylorinteg{T<:Number}(f, q0::Array{T,1}, t0::T, tmax::T,
     xaux = Array{Taylor1{T}}(length(x0))
     δx = Array{TaylorN{Taylor1{T}}}(dof)
     δdx = Array{TaylorN{Taylor1{T}}}(dof)
-    jac = Array{Taylor1{T}}(dof,dof)
+    jac = Array{Taylor1{T}}(6,6)
     for i in eachindex(jac)
         jac[i] = zero(x[1])
     end
-    QH = Array{T}(dof,dof)
-    RH = Array{T}(dof,dof)
-    aⱼ = Array{eltype(jt)}( dof )
+    QH = Array{T}(6,6)
+    RH = Array{T}(6,6)
+    aⱼ = Array{eltype(jt)}(6)
     qᵢ = similar(aⱼ)
     vⱼ = similar(aⱼ)
 
@@ -219,6 +255,8 @@ function liap_taylorinteg{T<:Number}(f, q0::Array{T,1}, t0::T, tmax::T,
         @inbounds tv[nsteps] = t0
         @inbounds for ind in 1:dof
             xv[ind,nsteps] = x0[ind]
+        end
+        @inbounds for ind in 1:6
             λtsum[ind] += log(RH[ind,ind])
             λ[ind,nsteps] = λtsum[ind]/tspan
         end
@@ -228,6 +266,8 @@ function liap_taylorinteg{T<:Number}(f, q0::Array{T,1}, t0::T, tmax::T,
         for i in eachindex(x0)
             @inbounds x[i] = Taylor1( x0[i], order )
         end
+        # println("x=", x)
+        # println("λ[:,nsteps]=", λ[:,nsteps])
         if nsteps > maxsteps
             warn("""
             Maximum number of integration steps reached; exiting.
@@ -235,6 +275,7 @@ function liap_taylorinteg{T<:Number}(f, q0::Array{T,1}, t0::T, tmax::T,
             break
         end
     end
+    # println("λ[:,end]=", λ[:,end])
 
     return view(tv,1:nsteps),  view(transpose(xv),1:nsteps,:),  view(transpose(λ),1:nsteps,:)
 end
