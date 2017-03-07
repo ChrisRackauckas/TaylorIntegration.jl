@@ -1,21 +1,8 @@
 # This file is part of the TaylorIntegration.jl package; MIT licensed
 
-#in-place evaluation version of TaylorSeries.jacobian;
+#in-place evaluation version of TaylorSeries.jacobian! for Halley's comet;
 #Modified from TaylorSeries.jl (URL: https://github.com/JuliaDiff/TaylorSeries.jl)
 #TaylorSeries.jl is released under MIT license; copyright 2016 Luis Benet and David P. Sanders
-function jacobian!{T<:Number}(jjac::Array{T,2}, vf::Array{TaylorN{T},1})
-    numVars = get_numvars()
-    @assert length(vf) == numVars
-
-    for comp2 = 1:numVars
-        for comp1 = 1:numVars
-            jjac[comp1,comp2] = vf[comp1].coeffs[2].coeffs[comp2]
-        end
-    end
-
-    nothing
-end
-
 function halleyjacobian!{T<:Number}(jjac::Array{T,2}, vf::Array{TaylorN{T},1})
     numVars = get_numvars()
     @assert length(vf) == numVars
@@ -28,9 +15,6 @@ function halleyjacobian!{T<:Number}(jjac::Array{T,2}, vf::Array{TaylorN{T},1})
             jjac[comp1,comp2] = vf[myset[comp1]].coeffs[2].coeffs[myset[comp2]]
         end
     end
-
-    #println("jjac=", jjac)
-
     nothing
 end
 
