@@ -179,7 +179,7 @@ function liap_taylorstep!{T<:Number}(f, x::Vector{Taylor1{T}}, dx::Vector{Taylor
 end
 
 
-function liap_taylorinteg{T<:Number}(f, q0::Array{T,1}, t0::T, tmax::T,
+function liap_taylorinteg{T<:Number}(f!, q0::Array{T,1}, t0::T, tmax::T,
         order::Int, abstol::T; maxsteps::Int=500)
     # Allocation
     tv = Array{T}(maxsteps+1)
@@ -228,7 +228,7 @@ function liap_taylorinteg{T<:Number}(f, q0::Array{T,1}, t0::T, tmax::T,
     # Integration
     nsteps = 1
     while t0 < tmax
-        δt = liap_taylorstep!(f, x, dx, xaux, δx, δdx, jac, t0, tmax, x0, order, abstol)
+        δt = liap_taylorstep!(f!, x, dx, xaux, δx, δdx, jac, t0, tmax, x0, order, abstol)
         @inbounds for ind in eachindex(jt)
             jt[ind] = x0[dof+ind]
         end
