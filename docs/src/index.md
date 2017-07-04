@@ -6,10 +6,8 @@ ODE integration using Taylor's method, and more, in [Julia](http://julialang.org
 
 ### Authors
 
-- [Jorge A. Pérez](https://www.linkedin.com/in/perezhz),
-Instituto de Ciencias Físicas, Universidad Nacional Autónoma de México (UNAM)
-- [Luis Benet](http://www.cicc.unam.mx/~benet/),
-Instituto de Ciencias Físicas, Universidad Nacional Autónoma de México (UNAM)
+- [Jorge A. Pérez](https://www.linkedin.com/in/perezhz), Instituto de Ciencias Físicas, Universidad Nacional Autónoma de México (UNAM)
+- [Luis Benet](http://www.cicc.unam.mx/~benet/), Instituto de Ciencias Físicas, Universidad Nacional Autónoma de México (UNAM)
 
 
 ### License
