@@ -180,7 +180,7 @@ end
 """
     liap_taylorinteg(f, q0, t0, tmax, order, abstol; maxsteps::Int=500)
 
-Similar to [`taylorinteg!`](@ref) for the calculation of the Liapunov
+Similar to [`taylorinteg`](@ref) for the calculation of the Liapunov
 spectrum.
 
 """
