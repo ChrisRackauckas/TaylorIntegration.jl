@@ -4,12 +4,14 @@ module TaylorIntegration
 
 using TaylorSeries
 
-export taylorinteg, liap_taylorinteg
+export  taylorinteg, liap_taylorinteg, @taylorize_ode
 
 include("explicitode.jl")
 
 include("liapunovspectrum.jl")
 
 include("rootfinding.jl")
+
+include("parse_eqs.jl")
 
 end #module
