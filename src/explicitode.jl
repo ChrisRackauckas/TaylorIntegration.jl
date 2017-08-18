@@ -2,7 +2,7 @@
 
 # jetcoeffs!
 doc"""
-    jetcoeffs!(eqsdiff, t, x, vT)
+    jetcoeffs!(eqsdiff, t, x)
 
 Returns an updated `x` using the recursion relation of the
 derivatives obtained from the differential equations
@@ -13,8 +13,6 @@ $\dot{x}=dx/dt=f(t,x)$.
 `t` is the independent variable. See [`taylorinteg`](@ref) for examples
 and structure of `eqsdiff`.
 Note that `x` is of type `Taylor1{T}` or `Taylor1{TaylorN{T}}`.
-`vT::Vector{T}` is a pre-allocated
-vector used for time-dependent differential equations.
 
 Initially, `x` contains only the 0-th order Taylor coefficient of
 the current system state (the initial conditions), and `jetcoeffs!`
@@ -42,7 +40,7 @@ function jetcoeffs!(eqsdiff, t::Taylor1{T},
 end
 
 doc"""
-    jetcoeffs!(eqsdiff!, t, x, dx, xaux, vT)
+    jetcoeffs!(eqsdiff!, t, x, dx, xaux)
 
 Mutates `x` in-place using the recursion relation of the
 derivatives obtained from the differential equations
@@ -54,8 +52,7 @@ $\dot{x}=dx/dt=f(t,x)$.
 and structure of `eqsdiff!`. Note that `x` is of type `Vector{Taylor1{T}}`
 or `Vector{Taylor1{TaylorN{T}}}`. In this case, two auxiliary containers
 `dx` and `xaux` (both of the same type as `x`) are needed to avoid
-allocations. `vT::Vector{T}` is a pre-allocated
-vector used for time-dependent differential equations.
+allocations.
 
 Initially, `x` contains only the 0-th order Taylor coefficient of
 the current system state (the initial conditions), and `jetcoeffs!`
@@ -137,9 +134,9 @@ independent variable, `x` contains the Taylor expansion of the dependent
 variable,`x0` is the initial value of the dependent variable, `order` is
 the degree  used for the `Taylor1` polynomials during the integration
 and `abstol` is the absolute tolerance used to determine the time step
-of the integration. Note that `x0` is of type `Taylor1{T<:Number}`. If the
-time step is larger than `t1-t0`, that difference is used as the time
-step.
+of the integration. Note that `x0` is of type `Taylor1{T<:Number}` or
+`Taylor1{TaylorN{T}}`. If the time step is larger than `t1-t0`, that
+difference is used as the time step.
 
 """
 function taylorstep!(f, t::Taylor1{T}, x::Taylor1{U},
@@ -147,7 +144,11 @@ function taylorstep!(f, t::Taylor1{T}, x::Taylor1{U},
     @assert t1 > t0
 
     # Compute the Taylor coefficients
-    jetcoeffs!(f, t, x)
+    if applicable( jetcoeffs!, Val{f}, t, x)
+        jetcoeffs!(Val{f}, t, x)
+    else
+        jetcoeffs!(f, t, x)
+    end
 
     # Compute the step-size of the integration using `abstol`
     δt = stepsize(x, abstol)
@@ -172,9 +173,9 @@ variables, `x0` corresponds to the initial (and updated) dependent
 variables and is of type `Vector{Taylor1{T<:Number}}`, `order`
 is the degree used for the `Taylor1` polynomials during the integration
 and `abstol` is the absolute tolerance used to determine the time step
-of the integration. `dx` is of the same type as `x` and represents the
-LHS of the ODE, whereas `xaux` is of the same type as `x0`; both are needed
-to avoid allocations.
+of the integration.  `dx` and `xaux`, both of the same type as `x0`,
+are needed to avoid allocations.
+
 
 """
 function taylorstep!(f!, t::Taylor1{T},
@@ -184,7 +185,11 @@ function taylorstep!(f!, t::Taylor1{T},
     @assert t1 > t0
 
     # Compute the Taylor coefficients
-    jetcoeffs!(f!, t, x, dx, xaux)
+    if applicable( jetcoeffs!, Val{f!}, t, x, dx)
+        jetcoeffs!(Val{f!}, t, x, dx)
+    else
+        jetcoeffs!(f!, t, x, dx, xaux)
+    end
 
     # Compute the step-size of the integration using `abstol`
     δt = stepsize(x, abstol)
