@@ -12,6 +12,4 @@ include("liapunovspectrum.jl")
 
 include("poincare.jl")
 
-include("sensitivity.jl") 
-
 end #module
