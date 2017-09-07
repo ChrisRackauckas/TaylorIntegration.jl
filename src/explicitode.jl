@@ -323,6 +323,10 @@ function taylorinteg(f!, q0::Array{U,1}, t0::T, tmax::T,
     const x = Array{Taylor1{U}}(dof)
     const dx = Array{Taylor1{U}}(dof)
     const xaux = Array{Taylor1{U}}(dof)
+    for i in eachindex(q0)
+        @inbounds x[i] = Taylor1( q0[i], order )
+        @inbounds dx[i] = Taylor1( zero(q0[i]), order )
+    end
 
     # Initial conditions
     @inbounds t[0] = t0
@@ -337,6 +341,7 @@ function taylorinteg(f!, q0::Array{U,1}, t0::T, tmax::T,
         δt = taylorstep!(f!, t, x, dx, xaux, t0, tmax, x0, order, abstol)
         for i in eachindex(x0)
             @inbounds x[i][0] = x0[i]
+            @inbounds dx[i] = Taylor1( zero(x0[i]), order )
         end
         t0 += δt
         @inbounds t[0] = t0
@@ -477,11 +482,17 @@ function taylorinteg(f!, q0::Array{U,1}, trange::Union{Range{T},Vector{T}},
         @inbounds xv[:,ind] .= x0
     end
 
+
+
     # Initialize the vector of Taylor1 expansions
     const t = Taylor1( T, order )
     const x = Array{Taylor1{U}}(dof)
     const dx = Array{Taylor1{U}}(dof)
     const xaux = Array{Taylor1{U}}(dof)
+    for i in eachindex(q0)
+        @inbounds x[i] = Taylor1( q0[i], order )
+        @inbounds dx[i] = Taylor1( zero(q0[i]), order )
+    end
 
     # Initial conditions
     @inbounds t[0] = trange[1]
@@ -498,6 +509,7 @@ function taylorinteg(f!, q0::Array{U,1}, trange::Union{Range{T},Vector{T}},
             δt = taylorstep!(f!, t, x, dx, xaux, t0, t1, x0, order, abstol)
             for i in eachindex(x0)
                 @inbounds x[i][0] = x0[i]
+                @inbounds dx[i] = Taylor1( zero(x0[i]), order )
             end
             t0 += δt
             t0 ≥ t1 && break
