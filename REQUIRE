@@ -2,3 +2,4 @@ julia 0.6
 TaylorSeries 0.7.0
 MacroTools 0.3.7
 Espresso 0.2.1
+Reexport 0.0.3

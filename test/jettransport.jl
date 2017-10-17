@@ -1,7 +1,11 @@
 # This file is part of the TaylorIntegration.jl package; MIT licensed
 
-using TaylorSeries, TaylorIntegration, Elliptic
-using Base.Test
+using TaylorIntegration, Elliptic
+if VERSION < v"0.7.0-DEV.2004"
+    using Base.Test
+else
+    using Test
+end
 
 const _order = 28
 const _abstol = 1.0E-20
@@ -380,7 +384,7 @@ end
     xvTN = taylorinteg(pendulum!, q0TN, tr, _order, _abstol, maxsteps=1)
     @test size(xvTN) == (5,2)
     xvTN = taylorinteg(pendulum!, q0TN, tr, _order, _abstol, maxsteps=100)
-    
+
     xvTN_0 = map( x->evaluate(x, [0.0, 0.0]), xvTN ) # the jet evaluated at the nominal solution
 
     @test isapprox(xvTN_0[1,:], xvTN_0[end,:]) #end point must coincide with a full period
