@@ -2,7 +2,8 @@
 
 module TaylorIntegration
 
-using TaylorSeries
+using Reexport
+@reexport using TaylorSeries
 
 export  taylorinteg, liap_taylorinteg, @taylorize_ode
 
