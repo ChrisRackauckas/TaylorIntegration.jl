@@ -24,20 +24,20 @@ g(t, x) = 0.3x
     δsol = exactsol(tvT1[end], x0T1, t0)-xvT1[end] #analytical vs jet transport diff at end of integration
     δcoeffs = δsol.coeffs
     @test isapprox(δcoeffs, zeros(6), atol=1e-10, rtol=0)
-    @test isapprox(x0, evaluate(xvT1[1]))
-    @test isapprox(xv[1], evaluate(xvT1[1]))
-    @test isapprox(xv[end], evaluate(xvT1[end]))
-    xvT1_0 = evaluate.(xvT1)
+    @test isapprox(x0, xvT1[1]())
+    @test isapprox(xv[1], xvT1[1]())
+    @test isapprox(xv[end], xvT1[end]())
+    xvT1_0 = xvT1.()
     @test norm(exactsol.(tvT1, x0, t0)-xvT1_0, Inf) < 1E-12
     for i in 1:5
         disp = 0.001*rand() #a small, random displacement
         x0_disp = x0+disp
         tv_disp, xv_disp = taylorinteg(f, x0_disp, t0, tmax, _order, _abstol)
-        xvT1_disp = evaluate.(xvT1, disp)
+        xvT1_disp = xvT1.(disp)
         @test norm(exactsol.(tvT1, x0_disp, t0)-xvT1_disp, Inf) < 1E-12 #analytical vs jet transport
-        @test norm(x0_disp-evaluate(xvT1[1], disp), Inf) < 1E-12
-        @test norm(xv_disp[1]-evaluate(xvT1[1], disp), Inf) < 1E-12
-        @test norm(xv_disp[end]-evaluate(xvT1[end], disp), Inf) < 1E-12
+        @test norm(x0_disp-xvT1[1](disp), Inf) < 1E-12
+        @test norm(xv_disp[1]-xvT1[1](disp), Inf) < 1E-12
+        @test norm(xv_disp[end]-xvT1[end](disp), Inf) < 1E-12
     end
 
     y0 = 1.0 #"nominal" initial condition
@@ -53,20 +53,20 @@ g(t, x) = 0.3x
     δsol_g = exactsol_g(uvT1[end], y0T1, t0)-yvT1[end] #analytical vs jet transport diff at end of integration
     δcoeffs_g = δsol_g.coeffs
     @test isapprox(δcoeffs_g, zeros(6), atol=1e-10, rtol=0)
-    @test isapprox(y0, evaluate(yvT1[1]), atol=1e-10, rtol=0)
-    @test isapprox(yv[1], evaluate(yvT1[1]), atol=1e-10, rtol=0)
-    @test isapprox(yv[end], evaluate(yvT1[end]), atol=1e-10, rtol=0)
-    yvT1_0 = evaluate.(yvT1)
+    @test isapprox(y0, yvT1[1](), atol=1e-10, rtol=0)
+    @test isapprox(yv[1], yvT1[1](), atol=1e-10, rtol=0)
+    @test isapprox(yv[end], yvT1[end](), atol=1e-10, rtol=0)
+    yvT1_0 = yvT1.()
     @test norm(exactsol_g.(uvT1, y0, u0)-yvT1_0, Inf) < 1E-9
     for i in 1:5
         disp = 0.001*rand() #a small, random displacement
         y0_disp = y0+disp
         uv_disp, yv_disp = taylorinteg(g, y0_disp, u0, 10/0.3, _order, _abstol)
-        yvT1_disp = evaluate.(yvT1, disp)
+        yvT1_disp = yvT1.(disp)
         @test norm(exactsol_g.(uvT1, y0_disp, u0)-yvT1_disp, Inf) < 1E-9 #analytical vs jet transport
-        @test norm(y0_disp-evaluate(yvT1[1], disp), Inf) < 1E-9
-        @test norm(yv_disp[1]-evaluate(yvT1[1], disp), Inf) < 1E-9
-        @test norm(yv_disp[end]-evaluate(yvT1[end], disp), Inf) < 1E-9
+        @test norm(y0_disp-yvT1[1](disp), Inf) < 1E-9
+        @test norm(yv_disp[1]-yvT1[1](disp), Inf) < 1E-9
+        @test norm(yv_disp[end]-yvT1[end](disp), Inf) < 1E-9
     end
 end
 
@@ -85,21 +85,20 @@ end
     δsol = exactsol(tvTN[end], x0TN, t0)-xvTN[end]
     δcoeffs = map(y->y[1], map(x->x.coeffs, δsol.coeffs))
     @test isapprox(δcoeffs, zeros(6), atol=1e-10, rtol=0)
-    @test isapprox(x0, evaluate(xvTN[1]))
-    @test isapprox(xv[1], evaluate(xvTN[1]))
-    @test isapprox(xv[end], evaluate(xvTN[end]))
-    xvTN_0 = evaluate.(xvTN)
+    @test isapprox(x0, xvTN[1]())
+    @test isapprox(xv[1], xvTN[1]())
+    @test isapprox(xv[end], xvTN[end]())
+    xvTN_0 = xvTN.()
     @test norm(exactsol.(tvTN, x0, t0)-xvTN_0, Inf) < 1E-12
     for i in 1:5
         disp = 0.001*rand() #a small, random displacement
         x0_disp = x0+disp
-        dv = map(x->[disp], tvTN) #a vector of identical displacements
         tv_disp, xv_disp = taylorinteg(f, x0_disp, t0, tmax, _order, _abstol)
-        xvTN_disp = evaluate.(xvTN, dv)
+        xvTN_disp = xvTN([disp])
         @test norm(exactsol.(tvTN, x0_disp, t0)-xvTN_disp, Inf) < 1E-12 #analytical vs jet transport
-        @test norm(x0_disp-evaluate(xvTN[1], [disp]), Inf) < 1E-12
-        @test norm(xv_disp[1]-evaluate(xvTN[1], [disp]), Inf) < 1E-12
-        @test norm(xv_disp[end]-evaluate(xvTN[end], [disp]), Inf) < 1E-12
+        @test norm(x0_disp-xvTN[1]([disp]), Inf) < 1E-12
+        @test norm(xv_disp[1]-xvTN[1]([disp]), Inf) < 1E-12
+        @test norm(xv_disp[end]-xvTN[end]([disp]), Inf) < 1E-12
     end
 
     y0 = 1.0 #"nominal" initial condition
@@ -114,17 +113,16 @@ end
     δsol_g = exactsol_g(uvTN[end], y0TN, u0)-yvTN[end]
     δcoeffs_g = map(y->y[1], map(x->x.coeffs, δsol_g.coeffs))
     @test isapprox(δcoeffs_g, zeros(6), atol=1e-10, rtol=0)
-    @test isapprox(y0, evaluate(yvTN[1]), atol=1e-10, rtol=0)
-    @test isapprox(yv[1], evaluate(yvTN[1]), atol=1e-10, rtol=0)
-    @test isapprox(yv[end], evaluate(yvTN[end]), atol=1e-10, rtol=0)
-    yvTN_0 = evaluate.(yvTN)
+    @test isapprox(y0, yvTN[1](), atol=1e-10, rtol=0)
+    @test isapprox(yv[1], yvTN[1](), atol=1e-10, rtol=0)
+    @test isapprox(yv[end], yvTN[end](), atol=1e-10, rtol=0)
+    yvTN_0 = yvTN.()
     @test norm(exactsol_g.(uvTN, y0, u0)-yvTN_0, Inf) < 1E-9
     for i in 1:5
         disp = 0.001*rand() #a small, random displacement
         y0_disp = y0+disp
-        dv = map(x->[disp], uvTN) #a vector of identical displacements
         uv_disp, yv_disp = taylorinteg(g, y0_disp, u0, 10/0.3, _order, _abstol)
-        yvTN_disp = evaluate.(yvTN, dv)
+        yvTN_disp = yvTN([disp])
         @test norm(exactsol_g.(uvTN, y0_disp, u0)-yvTN_disp, Inf) < 1E-9 #analytical vs jet transport
         @test norm(y0_disp-yvTN[1]([disp]), Inf) < 1E-9
         @test norm(yv_disp[1]-yvTN[1]([disp]), Inf) < 1E-9
@@ -177,12 +175,12 @@ end
     @test length(uv) == length(yvT1)
     @test isapprox(δcoeffs_g, zeros(6), atol=1e-10, rtol=0)
     yv_analytical = exactsol_g.(uv, y0, uv[1])
-    yvT1_0 = evaluate.(yvT1)
+    yvT1_0 = yvT1.()
     @test isapprox(yv_analytical, yvT1_0, atol=1e-10, rtol=0)
     for i in 1:5
         disp = 0.001*rand() #a small, random displacement
         yv_disp = taylorinteg(g, y0+disp, uv, _order, _abstol)
-        yvT1_disp = evaluate.(yvT1, disp)
+        yvT1_disp = yvT1.(disp)
         @test norm(exactsol_g.(uv, y0+disp, uv[1])-yvT1_disp, Inf) < 1E-9 #analytical vs jet transport
         @test norm(yv_disp-yvT1_disp, Inf) < 1E-9 # integration vs jet transport
     end
@@ -208,15 +206,14 @@ end
     @test length(tv) == length(xvTN)
     @test isapprox(δcoeffs, zeros(6), atol=1e-10, rtol=0)
     xv_analytical = exactsol.(tv, x0, tv[1])
-    xvTN_0 = evaluate.(xvTN)
+    xvTN_0 = xvTN.()
     @test isapprox(xv_analytical, xvTN_0, atol=1e-10, rtol=0)
     for i in 1:5
         disp = 0.001*rand() #a small, random displacement
-        dv = map(x->[disp], tv) #a vector of identical displacements
         xv_disp = taylorinteg(f, x0+disp, tv, _order, _abstol)
         xv_disp_ = taylorinteg(f, x0+disp, ta, _order, _abstol)
         @test xv_disp == xv_disp_
-        xvTN_disp = evaluate.(xvTN, dv)
+        xvTN_disp = xvTN([disp])
         @test norm(exactsol.(tv, x0+disp, tv[1])-xvTN_disp, Inf) < 1E-12 #analytical vs jet transport
         @test norm(xv_disp-xvTN_disp, Inf) < 1E-12 # integration vs jet transport
     end
@@ -234,13 +231,12 @@ end
     @test length(uv) == length(yvTN)
     @test isapprox(δcoeffs_g, zeros(6), atol=1e-10, rtol=0)
     yv_analytical = exactsol_g.(uv, y0, uv[1])
-    yvTN_0 = evaluate.(yvTN)
+    yvTN_0 = yvTN.()
     @test isapprox(yv_analytical, yvTN_0, atol=1e-10, rtol=0)
     for i in 1:5
         disp = 0.001*rand() #a small, random displacement
-        dv = map(x->[disp], uv) #a vector of identical displacements
         yv_disp = taylorinteg(g, y0+disp, uv, _order, _abstol)
-        yvTN_disp = evaluate.(yvTN, dv)
+        yvTN_disp = yvTN([disp])
         @test norm(exactsol_g.(uv, y0+disp, uv[1])-yvTN_disp, Inf) < 1E-9 #analytical vs jet transport
         @test norm(yv_disp-yvTN_disp, Inf) < 1E-9 # integration vs jet transport
     end
@@ -261,7 +257,7 @@ end
     @test size(tv1) == (2,)
     @test size(xv1) == (2, 3)
     tv1, xv1 = taylorinteg(harmosc!, x0T1, 0.0, 100pi, _order, _abstol, maxsteps=2000)
-    y0 = evaluate.(xv1)
+    y0 = xv1.()
     x1(t,δω) = sin((ω0+δω)*t)
     x2(t,δω) = (ω0+δω)*cos((ω0+δω)*t)
     @test norm(y0[:,1]-x1.(tv1,0.0), Inf) < 1E-11
@@ -270,12 +266,12 @@ end
         δω=0.001*rand()
         x0_disp = x0+[0.0,δω,δω]
         tv, xv = taylorinteg(harmosc!, x0_disp, 0.0, 100pi, _order, _abstol, maxsteps=2000)
-        y1 = evaluate.(xv1, δω)
+        y1 = xv1.(δω)
         @test norm(y1[:,1]-x1.(tv1,δω),Inf) < 1E-11
         @test norm(y1[:,2]-x2.(tv1,δω),Inf) < 1E-11
-        @test norm(x0_disp-evaluate.(xv1[1,:], δω), Inf) < 1E-11
-        @test norm(xv[1,:]-evaluate.(xv1[1,:], δω), Inf) < 1E-11
-        @test norm(xv[end,:]-evaluate.(xv1[end,:], δω), Inf) < 1E-11
+        @test norm(x0_disp-xv1[1,:].(δω), Inf) < 1E-11
+        @test norm(xv[1,:]-xv1[1,:].(δω), Inf) < 1E-11
+        @test norm(xv[end,:]-xv1[end,:].(δω), Inf) < 1E-11
     end
 end
 
@@ -301,7 +297,7 @@ end
     xv1 = taylorinteg(harmosc!, x0T1, tv, _order, _abstol, maxsteps=2000)
     xv1_ = taylorinteg(harmosc!, x0T1, ta, _order, _abstol, maxsteps=2000)
     @test xv1 == xv1_
-    y0 = evaluate.(xv1)
+    y0 = xv1.()
     x1(t,δω) = sin((ω0+δω)*t)
     x2(t,δω) = (ω0+δω)*cos((ω0+δω)*t)
     @test norm(y0[:,1]-x1.(tv,0.0), Inf) < 1E-11
@@ -312,7 +308,7 @@ end
         xv = taylorinteg(harmosc!, x0_disp, tv, _order, _abstol, maxsteps=2000)
         xv_ = taylorinteg(harmosc!, x0_disp, ta, _order, _abstol, maxsteps=2000)
         @test xv == xv_
-        y1 = evaluate.(xv1, δω)
+        y1 = xv1.(δω)
         @test norm(y1[:,1]-x1.(tv,δω), Inf) < 1E-11
         @test norm(y1[:,2]-x2.(tv,δω), Inf) < 1E-11
         @test norm(y1-xv, Inf) < 1E-11
@@ -342,11 +338,11 @@ end
 
     @test (length(tvTN), length(x0)) == size(xvTN)
     @test isapprox(x_δcoeffs, zeros(6), atol=1e-10, rtol=0)
-    @test isapprox(x0, map( x->evaluate(x), xvTN[1,:]))
-    @test isapprox(xv[1,:], map( x->evaluate(x), xvTN[1,:])) # nominal solution must coincide with jet evaluated at ξ=(0,0) at initial time
-    @test isapprox(xv[end,:], map( x->evaluate(x), xvTN[end,:])) #nominal solution must coincide with jet evaluated at ξ=(0,0) at final time
+    @test isapprox(x0, xvTN[1,:].())
+    @test isapprox(xv[1,:], xvTN[1,:].()) # nominal solution must coincide with jet evaluated at ξ=(0,0) at initial time
+    @test isapprox(xv[end,:], xvTN[end,:].()) #nominal solution must coincide with jet evaluated at ξ=(0,0) at final time
 
-    xvTN_0 = map( x->evaluate(x), xvTN ) # the jet evaluated at the nominal solution
+    xvTN_0 = xvTN.() # the jet evaluated at the nominal solution
     @test isapprox(xv[end,:], xvTN_0[end,:]) # nominal solution must coincide with jet evaluated at ξ=(0,0) at final time
     @test isapprox(xvTN_0[1,:], xvTN_0[end,:]) # end point must coincide with a full period
 end
@@ -381,7 +377,7 @@ end
     @test size(xvTN) == (5,2)
     xvTN = taylorinteg(pendulum!, q0TN, tr, _order, _abstol, maxsteps=100)
     
-    xvTN_0 = map( x->evaluate(x, [0.0, 0.0]), xvTN ) # the jet evaluated at the nominal solution
+    xvTN_0 = xvTN.() # the jet evaluated at the nominal solution
 
     @test isapprox(xvTN_0[1,:], xvTN_0[end,:]) #end point must coincide with a full period
     @test isapprox(xv, xvTN_0) #nominal solution must coincide with jet evaluated at ξ=(0,0)
@@ -402,10 +398,11 @@ end
         ϕ = 2pi*rand()
         # generate a random point on a circumference of radius disp
         ξ = disp*[cos(ϕ), sin(ϕ)]
+        ξv = fill(ξ, size(xvTN))
         #propagate in time full solution with initial condition q0+ξ
         xv_disp = taylorinteg(pendulum!, q0+ξ, tr, _order, _abstol, maxsteps=100)
         #evaluate jet at q0+ξ
-        xvTN_disp = map( x->evaluate(x, ξ), xvTN )
+        xvTN_disp = evaluate.(xvTN, ξv)
         #the propagated exact solution at q0+ξ should be approximately equal to the propagated jet solution evaluated at the same point:
         @test isapprox( xvTN_disp, xv_disp )
     end
