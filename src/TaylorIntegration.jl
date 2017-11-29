@@ -10,6 +10,6 @@ include("explicitode.jl")
 
 include("liapunovspectrum.jl")
 
-include("surfaceintersection.jl")
+include("rootfinding.jl")
 
 end #module
